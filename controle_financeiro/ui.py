@@ -97,19 +97,26 @@ def _render_dashboard(df: pd.DataFrame) -> None:
 
     st.subheader("📈 Evolução mensal")
     df_mes = df.copy()
-    df_mes["mes"] = pd.to_datetime(df_mes["data_registro"]).dt.to_period("M")
-    evolução = df_mes.groupby("mes")["valor"].sum().reset_index()
-    evolução["mes"] = evolução["mes"].dt.to_timestamp()
+    df_mes["mes"] = pd.to_datetime(df_mes["data_registro"]).dt.to_period("M").dt.to_timestamp()
 
-    fig_linha = px.line(
-        evolução,
+    # Gráfico de barras empilhadas por categoria, mês a mês
+    evolução_stack = (
+        df_mes.groupby(["mes", "categoria"])["valor"]
+        .sum()
+        .reset_index()
+    )
+
+    fig_barras = px.bar(
+        evolução_stack,
         x="mes",
         y="valor",
-        title="Gastos por mês",
-        markers=True,
+        color="categoria",
+        title="Gastos por mês (empilhado por categoria)",
+        labels={"valor": "Valor (R$)", "mes": "Mês", "categoria": "Categoria"},
+        barmode="stack",
     )
-    fig_linha.update_layout(xaxis_title="Mês", yaxis_title="Valor (R$)")
-    st.plotly_chart(fig_linha, use_container_width=True)
+    fig_barras.update_layout(xaxis_tickformat="%b %Y")
+    st.plotly_chart(fig_barras, use_container_width=True)
 
 
 def run_app() -> None:
