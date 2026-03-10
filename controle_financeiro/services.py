@@ -69,3 +69,9 @@ def limpar_gastos() -> None:
     """Limpa todos os gastos registrados."""
 
     db.clear_expenses()
+
+
+def remover_gasto(gasto_id: int) -> None:
+    """Remove um gasto existente pelo seu ID."""
+
+    db.delete_expense(gasto_id)

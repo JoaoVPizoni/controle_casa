@@ -43,6 +43,7 @@ ORDER BY g.data_registro DESC, g.id DESC;
 """
 
 SQL_DELETE_GASTOS = "DELETE FROM gastos;"
+SQL_DELETE_GASTO_BY_ID = "DELETE FROM gastos WHERE id = ?;"
 
 
 def _ensure_db_path() -> None:
@@ -114,4 +115,12 @@ def clear_expenses() -> None:
     conn = get_connection()
     with conn:
         conn.execute(SQL_DELETE_GASTOS)
+
+
+def delete_expense(expense_id: int) -> None:
+    """Remove um gasto específico pelo ID."""
+
+    conn = get_connection()
+    with conn:
+        conn.execute(SQL_DELETE_GASTO_BY_ID, (expense_id,))
 

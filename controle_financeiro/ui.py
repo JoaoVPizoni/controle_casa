@@ -12,7 +12,7 @@ from . import config
 from . import services
 
 
-def _render_sidebar() -> None:
+def _render_sidebar(df: pd.DataFrame) -> None:
     """Renderiza o painel lateral com formulários de entrada."""
 
     st.sidebar.header("📥 Adicionar")
@@ -46,6 +46,20 @@ def _render_sidebar() -> None:
     if st.sidebar.button("Limpar todos os gastos"):
         services.limpar_gastos()
         st.rerun()
+
+    if not df.empty:
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("🗑️ Remover gasto")
+
+        despesas = df.sort_values(["data_registro", "id"], ascending=[False, False])
+        opções = [f"{row.id} — {row.item} ({row.categoria}) — R$ {row.valor:,.2f}" for row in despesas.itertuples()]
+        escolha = st.sidebar.selectbox("Selecione o gasto", opções, key="remover_gasto")
+
+        if st.sidebar.button("Remover selecionado"):
+            gasto_id = int(escolha.split(" — ")[0])
+            services.remover_gasto(gasto_id)
+            st.success("Gasto removido com sucesso.")
+            st.rerun()
 
 
 def _render_dashboard(df: pd.DataFrame) -> None:
@@ -108,9 +122,10 @@ def run_app() -> None:
     st.title("🏠 Controle Financeiro Residencial")
     st.caption("Organize seus gastos por área e acompanhe sua evolução financeira.")
 
-    _render_sidebar()
-
     df = services.listar_gastos_dataframe()
+
+    _render_sidebar(df)
+
     st.divider()
     _render_dashboard(df)
 
