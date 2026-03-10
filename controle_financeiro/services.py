@@ -48,13 +48,21 @@ def calcular_total_por_categoria(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
 
-    return df.groupby("categoria", as_index=False)["valor"].sum().sort_values("valor", ascending=False)
+    total_por_categoria = (
+        df.groupby("categoria", as_index=False)["valor"]
+        .sum()
+        .sort_values("valor", ascending=False)
+    )
+
+    total_por_categoria["valor"] = total_por_categoria["valor"].round(2)
+    return total_por_categoria
 
 
 def calcular_total_geral(df: pd.DataFrame) -> float:
     """Retorna o total de todos os gastos."""
 
-    return float(df["valor"].sum()) if not df.empty else 0.0
+    total = float(df["valor"].sum()) if not df.empty else 0.0
+    return round(total, 2)
 
 
 def limpar_gastos() -> None:

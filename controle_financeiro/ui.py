@@ -68,7 +68,8 @@ def _render_dashboard(df: pd.DataFrame) -> None:
 
     with col1:
         st.markdown("**Tabela de gastos por categoria**")
-        st.table(total_por_categoria.rename(columns={"categoria": "Categoria", "valor": "Total (R$)"}))
+        df_display = total_por_categoria.rename(columns={"categoria": "Categoria", "valor": "Total (R$)"})
+        st.table(df_display.style.format({"Total (R$)": "{:.2f}"}))
 
     with col2:
         fig_pizza = px.pie(
