@@ -75,3 +75,15 @@ def remover_gasto(gasto_id: int) -> None:
     """Remove um gasto existente pelo seu ID."""
 
     db.delete_expense(gasto_id)
+
+
+def exportar_banco() -> bytes:
+    """Exporta o banco de dados atual como um arquivo binário."""
+
+    return db.export_db()
+
+
+def importar_banco(data: bytes) -> None:
+    """Substitui o banco de dados atual pelo arquivo enviado."""
+
+    db.import_db(data)
