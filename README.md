@@ -36,3 +36,4 @@ streamlit run app.py
 - Registro de gastos vinculado a categorias.
 - Visualização de gastos por categoria e evolução mensal.
 - Persistência local em SQLite para manter os dados entre execuções.
+- Backup/restauração do banco (`finances.db`) diretamente pela interface do Streamlit.

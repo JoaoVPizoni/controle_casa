@@ -67,6 +67,31 @@ def get_connection() -> sqlite3.Connection:
     return conn
 
 
+def get_db_path() -> Path:
+    """Retorna o caminho para o arquivo de banco de dados."""
+
+    _ensure_db_path()
+    return DB_PATH
+
+
+def export_db() -> bytes:
+    """Exporta o arquivo de banco de dados para bytes."""
+
+    # Garantir que o arquivo exista e a estrutura esteja criada.
+    conn = get_connection()
+    conn.close()
+    return DB_PATH.read_bytes()
+
+
+def import_db(data: bytes) -> None:
+    """Substitui o banco de dados atual pelo arquivo enviado."""
+
+    _ensure_db_path()
+    # Fecha qualquer conexão aberta antes de sobrescrever o arquivo.
+    sqlite3.connect(DB_PATH).close()
+    DB_PATH.write_bytes(data)
+
+
 def ensure_default_categories(categories: Iterable[str]) -> None:
     """Garante que as categorias base existam no banco."""
 
@@ -78,9 +103,9 @@ def ensure_default_categories(categories: Iterable[str]) -> None:
 def list_categories() -> List[Tuple[int, str]]:
     """Retorna todas as categorias (id, nome)."""
 
-    conn = get_connection()
-    cur = conn.execute(SQL_SELECT_CATEGORIAS)
-    return [(row[0], row[1]) for row in cur.fetchall()]
+    with get_connection() as conn:
+        cur = conn.execute(SQL_SELECT_CATEGORIAS)
+        return [(row[0], row[1]) for row in cur.fetchall()]
 
 
 def add_category(name: str) -> int:
@@ -104,9 +129,9 @@ def add_expense(item: str, categoria_id: int, valor: float, data_registro: str) 
 def list_expenses() -> List[sqlite3.Row]:
     """Retorna a lista de gastos ordenada por data de registro."""
 
-    conn = get_connection()
-    cur = conn.execute(SQL_SELECT_GASTOS)
-    return cur.fetchall()
+    with get_connection() as conn:
+        cur = conn.execute(SQL_SELECT_GASTOS)
+        return cur.fetchall()
 
 
 def clear_expenses() -> None:
