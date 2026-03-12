@@ -122,5 +122,5 @@ def delete_expense(expense_id: int) -> None:
 
     conn = get_connection()
     with conn:
-        conn.execute(SQL_DELETE_GASTO_BY_ID, (expense_id,))
+        conn.execute(SQL_DELETE_GASTO_BY_ID, (expense_id,)) 
 
