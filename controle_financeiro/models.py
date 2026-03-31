@@ -7,6 +7,14 @@ from datetime import date
 
 
 @dataclass(frozen=True)
+class Renda:
+    id: int
+    pessoa: str
+    valor: float
+    data_registro: date
+
+
+@dataclass(frozen=True)
 class Categoria:
     id: int
     nome: str
@@ -19,3 +27,11 @@ class Gasto:
     categoria: str
     valor: float
     data_registro: date
+
+
+@dataclass(frozen=True)
+class WishItem:
+    id: int
+    nome: str
+    preco: float
+    link: str

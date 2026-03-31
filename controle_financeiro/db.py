@@ -8,6 +8,15 @@ from typing import Iterable, List, Optional, Tuple
 
 from .config import DB_PATH, DATA_DIR
 
+SQL_CREATE_RENDAS = """
+CREATE TABLE IF NOT EXISTS rendas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pessoa TEXT NOT NULL,
+    valor REAL NOT NULL,
+    data_registro TEXT NOT NULL
+);
+"""
+
 SQL_CREATE_CATEGORIES = """
 CREATE TABLE IF NOT EXISTS categorias (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,6 +34,18 @@ CREATE TABLE IF NOT EXISTS gastos (
     FOREIGN KEY(categoria_id) REFERENCES categorias(id)
 );
 """
+
+SQL_CREATE_WISH_ITEMS = """
+CREATE TABLE IF NOT EXISTS wish_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    preco REAL NOT NULL,
+    link TEXT
+);
+"""
+
+SQL_INSERT_RENDA = "INSERT INTO rendas (pessoa, valor, data_registro) VALUES (?, ?, ?);"
+SQL_SELECT_RENDAS = "SELECT id, pessoa, valor, data_registro FROM rendas ORDER BY data_registro DESC, id DESC;"
 
 SQL_INSERT_CATEGORIA = "INSERT OR IGNORE INTO categorias (nome) VALUES (?);"
 SQL_SELECT_CATEGORIAS = "SELECT id, nome FROM categorias ORDER BY nome;"
@@ -45,6 +66,10 @@ ORDER BY g.data_registro DESC, g.id DESC;
 SQL_DELETE_GASTOS = "DELETE FROM gastos;"
 SQL_DELETE_GASTO_BY_ID = "DELETE FROM gastos WHERE id = ?;"
 
+SQL_INSERT_WISH_ITEM = "INSERT INTO wish_items (nome, preco, link) VALUES (?, ?, ?);"
+SQL_SELECT_WISH_ITEMS = "SELECT id, nome, preco, link FROM wish_items ORDER BY id DESC;"
+SQL_DELETE_WISH_ITEM_BY_ID = "DELETE FROM wish_items WHERE id = ?;"
+
 
 def _ensure_db_path() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -63,6 +88,8 @@ def get_connection() -> sqlite3.Connection:
     with conn:
         conn.execute(SQL_CREATE_CATEGORIES)
         conn.execute(SQL_CREATE_GASTOS)
+        conn.execute(SQL_CREATE_RENDAS)
+        conn.execute(SQL_CREATE_WISH_ITEMS)
 
     return conn
 
@@ -147,5 +174,63 @@ def delete_expense(expense_id: int) -> None:
 
     conn = get_connection()
     with conn:
-        conn.execute(SQL_DELETE_GASTO_BY_ID, (expense_id,)) 
+        conn.execute(SQL_DELETE_GASTO_BY_ID, (expense_id,))
+
+
+def add_income(pessoa: str, valor: float, data_registro: str) -> int:
+    """Adiciona uma renda e retorna seu ID."""
+
+    conn = get_connection()
+    with conn:
+        cur = conn.execute(SQL_INSERT_RENDA, (pessoa.strip(), valor, data_registro))
+        return cur.lastrowid
+
+
+def list_incomes() -> List[sqlite3.Row]:
+    """Retorna a lista de rendas ordenada por data de registro."""
+
+    with get_connection() as conn:
+        cur = conn.execute(SQL_SELECT_RENDAS)
+        return cur.fetchall()
+
+
+def clear_incomes() -> None:
+    """Remove todas as rendas armazenadas."""
+
+    conn = get_connection()
+    with conn:
+        conn.execute("DELETE FROM rendas;")
+
+
+def delete_income(income_id: int) -> None:
+    """Remove uma renda específica pelo ID."""
+
+    conn = get_connection()
+    with conn:
+        conn.execute("DELETE FROM rendas WHERE id = ?;", (income_id,))
+
+
+def add_wish_item(nome: str, preco: float, link: str) -> int:
+    """Adiciona um item de desejo e retorna seu ID."""
+
+    conn = get_connection()
+    with conn:
+        cur = conn.execute(SQL_INSERT_WISH_ITEM, (nome.strip(), preco, link.strip() if link else ""))
+        return cur.lastrowid
+
+
+def list_wish_items() -> List[sqlite3.Row]:
+    """Retorna a lista de itens de desejo."""
+
+    with get_connection() as conn:
+        cur = conn.execute(SQL_SELECT_WISH_ITEMS)
+        return cur.fetchall()
+
+
+def delete_wish_item(wish_item_id: int) -> None:
+    """Remove um item de desejo específico pelo ID."""
+
+    conn = get_connection()
+    with conn:
+        conn.execute(SQL_DELETE_WISH_ITEM_BY_ID, (wish_item_id,)) 
 
