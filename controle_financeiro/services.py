@@ -8,7 +8,7 @@ from typing import List
 import pandas as pd
 
 from . import db
-from .models import Categoria, Gasto
+from .models import Categoria, Gasto, Renda, WishItem
 
 
 def get_categoria_choices() -> List[Categoria]:
@@ -83,7 +83,84 @@ def exportar_banco() -> bytes:
     return db.export_db()
 
 
-def importar_banco(data: bytes) -> None:
-    """Substitui o banco de dados atual pelo arquivo enviado."""
+def adicionar_renda(pessoa: str, valor: float, data_registro: date) -> Renda:
+    """Registra uma nova renda."""
 
-    db.import_db(data)
+    renda_id = db.add_income(pessoa, valor, data_registro.isoformat())
+    return Renda(id=renda_id, pessoa=pessoa, valor=valor, data_registro=data_registro)
+
+
+def listar_rendas_dataframe() -> pd.DataFrame:
+    """Retorna todas as rendas como DataFrame."""
+
+    raw = db.list_incomes()
+    df = pd.DataFrame(raw, columns=["id", "pessoa", "valor", "data_registro"])
+    if not df.empty:
+        df["data_registro"] = pd.to_datetime(df["data_registro"]).dt.date
+    return df
+
+
+def calcular_total_rendas(df: pd.DataFrame) -> float:
+    """Retorna o total de todas as rendas."""
+
+    total = float(df["valor"].sum()) if not df.empty else 0.0
+    return round(total, 2)
+
+
+def limpar_rendas() -> None:
+    """Limpa todas as rendas registradas."""
+
+    db.clear_incomes()
+
+
+def remover_renda(renda_id: int) -> None:
+    """Remove uma renda existente pelo seu ID."""
+
+    db.delete_income(renda_id)
+
+
+def calcular_saldo(df_gastos: pd.DataFrame, df_rendas: pd.DataFrame) -> float:
+    """Calcula o saldo: total rendas - total gastos."""
+
+    total_rendas = calcular_total_rendas(df_rendas)
+    total_gastos = calcular_total_geral(df_gastos)
+    return round(total_rendas - total_gastos, 2)
+
+
+def adicionar_wish_item(nome: str, preco: float, link: str) -> WishItem:
+    """Registra um novo item de desejo."""
+
+    wish_id = db.add_wish_item(nome, preco, link)
+    return WishItem(id=wish_id, nome=nome, preco=preco, link=link)
+
+
+def listar_wish_items_dataframe() -> pd.DataFrame:
+    """Retorna todos os itens de desejo como DataFrame."""
+
+    raw = db.list_wish_items()
+    df = pd.DataFrame(raw, columns=["id", "nome", "preco", "link"])
+    return df
+
+
+def remover_wish_item(wish_item_id: int) -> None:
+    """Remove um item de desejo existente pelo seu ID."""
+
+    db.delete_wish_item(wish_item_id)
+
+
+def selecionar_wish_item(wish_item_id: int, categoria_id: int, data_selecao: date) -> Gasto:
+    """Seleciona um item de desejo, adiciona como gasto e remove da lista."""
+
+    # Primeiro, obter o item
+    wish_items = listar_wish_items_dataframe()
+    item = wish_items[wish_items["id"] == wish_item_id].iloc[0]
+    nome = item["nome"]
+    preco = item["preco"]
+
+    # Adicionar como gasto
+    gasto = adicionar_gasto(nome, categoria_id, preco, data_selecao)
+
+    # Remover da lista de desejos
+    remover_wish_item(wish_item_id)
+
+    return gasto
